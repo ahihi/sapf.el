@@ -146,5 +146,10 @@
        (lambda () (sapf-run-paragraph transform-text)))
     (sapf-run-paragraph transform-text)))
 
+;; remove incorrect smartparens pairs
+(with-eval-after-load 'smartparens
+  (sp-local-pair 'sapf-mode "`" nil :actions nil)
+  (sp-local-pair 'sapf-mode "'" nil :actions nil))
+
 (provide 'sapf)
 ;;; sapf.el ends here
