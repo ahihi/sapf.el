@@ -6,6 +6,7 @@
 
 (require 'cl)
 (require 'comint)
+(require 'pulse)
 (require 'subr-x)
 
 (defvar sapf-buffer
@@ -14,10 +15,15 @@
 
 (defvar sapf-interpreter
   "sapf"
-  "*The command to run sapf.")
+  "*The command to run sapf (default=sapf).")
 
 (defvar sapf-interpreter-arguments
-  '())
+  nil
+  "*Command-line arguments to be passed to the sapf interpreter (default=nil).")
+
+(defvar sapf-highlight
+  #'pulse-momentary-highlight-region
+  "*Function to momentarily highlight code being evaluated (default=pulse-momentary-highlight-region). Takes two arguments specifying the endpoints of the region containing the code.")
 
 (defvar sapf-mode-map (make-sparse-keymap))
 
@@ -106,7 +112,8 @@
          (s (buffer-substring-no-properties l r))
          (s (if transform-text (funcall transform-text s) s)))
     (sapf-send-string s)
-    (nav-flash-show l r)))
+    (if sapf-highlight
+        (funcall sapf-highlight l r))))
 
 (defun sapf-foreach-paragraph (fun)
   (interactive)
