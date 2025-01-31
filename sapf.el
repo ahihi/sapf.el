@@ -21,6 +21,28 @@
 
 (defvar sapf-mode-map (make-sparse-keymap))
 
+(defvar sapf-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\( "()" st)
+    (modify-syntax-entry ?\) "((" st)
+    (modify-syntax-entry ?\{ "(}" st)
+    (modify-syntax-entry ?\} "){" st)
+    (modify-syntax-entry ?\[ "(]" st)
+    (modify-syntax-entry ?\] ")[" st)
+
+    ;; - and _ are word constituents
+    (modify-syntax-entry ?_ "w" st)
+    (modify-syntax-entry ?- "w" st)
+    
+    ;; both double quotes make strings
+    (modify-syntax-entry ?\" "\"" st)
+
+    ;; comments
+    (modify-syntax-entry ?\; "<" st)
+    (modify-syntax-entry ?\n ">" st)
+
+    st))
+
 (define-derived-mode
   sapf-mode
   prog-mode
@@ -28,6 +50,7 @@
   "Minor mode for interacting with a sapf process."
   ;; (set (make-local-variable 'paragraph-start) "\f\\|[ \t]*$")
   ;; (set (make-local-variable 'paragraph-separate) "[ \t\f]*$")
+  (set (make-local-variable 'comment-start) "; ")
   (turn-on-font-lock))
 
 (defun sapf-start ()
