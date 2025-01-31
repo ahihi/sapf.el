@@ -13,8 +13,7 @@ with straight.el:
 
 ```elisp
 (use-package sapf
-  :ensure nil
-  :load-path "~/.emacs.d/sapf"
+  :straight (sapf :type git :host github :repo "ahihi/sapf.el")
   :config
   ;; set sapf interpreter, in case it is not in your exec-path
   (setq sapf-interpreter "~/Downloads/sapf_v0.1.21/sapf")
