@@ -86,11 +86,7 @@
 
 (defun sapf-send-string (s)
   (if (comint-check-proc sapf-buffer)
-      (let ((cs (sapf-chunk-string 64 (concat (string-trim s) "\n")))
-            (buf (current-buffer)))
-        (set-buffer sapf-buffer)
-        ;; (delete-region (point-min) (point-max))
-        (set-buffer buf)
+      (let ((cs (sapf-chunk-string 64 (concat (string-trim s) "\n"))))
         (mapcar (lambda (c) (comint-send-string sapf-buffer c)) cs))
     (error "no sapf process running?")))
 
