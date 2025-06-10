@@ -26,5 +26,6 @@ with straight.el:
   ;; define some key bindings
   (define-key sapf-mode-map (kbd "M-<return>") #'sapf-run-multiple-lines)
   (define-key sapf-mode-map (kbd "C-c C-s") #'sapf-start)
-  (define-key sapf-mode-map (kbd "C-c C-q") #'sapf-stop))
+  (define-key sapf-mode-map (kbd "C-c C-q") #'sapf-stop)
+  (define-key sapf-mode-map (kbd "s-.") #'sapf-stop-playback))
 ```

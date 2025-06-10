@@ -94,6 +94,10 @@
         (mapcar (lambda (c) (comint-send-string sapf-buffer c)) cs))
     (error "no sapf process running?")))
 
+(defun sapf-stop-playback ()
+  (interactive)
+  (sapf-send-string "stop"))
+
 (defun sapf-chunk-string (n s)
   "Split a string S into chunks of N characters."
   (let* ((l (length s))
