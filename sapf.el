@@ -21,6 +21,10 @@
   nil
   "*Command-line arguments to be passed to the sapf interpreter (default=nil).")
 
+(defvar sapf-terminal
+  'auto
+  "*Which type of terminal to run the sapf interpreter in: vterm, comint, or auto (default=auto).")
+
 (defvar sapf-highlight
   #'pulse-momentary-highlight-region
   "*Function to momentarily highlight code being evaluated (default=pulse-momentary-highlight-region). Takes two arguments specifying the endpoints of the region containing the code.")
@@ -62,28 +66,22 @@
 (defun sapf-start ()
   "Start sapf."
   (interactive)
-  (if (comint-check-proc sapf-buffer)
+  (if (sapf--running-p)
       (error "A sapf process is already running")
-    (apply
-     'make-comint
-     "sapf"
-     sapf-interpreter
-     nil
-     sapf-interpreter-arguments)
+    (sapf--start-process)
     (sapf-see-output))
   ;; (sapf-send-string (concat ":script " sapf-boot-script-path))
   )
 
 (defun sapf-stop ()
-  "Stop haskell."
+  "Stop sapf."
   (interactive)
-  (let ((process (get-buffer-process sapf-buffer)))
-    (if process (kill-process process))))
+  (sapf--stop-process))
 
 (defun sapf-see-output ()
   "Show sapf output."
   (interactive)
-  (when (comint-check-proc sapf-buffer)
+  (when (sapf--running-p)
     (with-current-buffer sapf-buffer
       (let ((window (display-buffer (current-buffer))))
         (goto-char (point-max))
@@ -91,7 +89,7 @@
           (set-window-point window (point-max)))))))
 
 (defun sapf-send-string (s)
-  (if (comint-check-proc sapf-buffer)
+  (if (sapf--running-p)
       (let ((cs (sapf-chunk-string 64 (concat (string-trim s) "\n"))))
         (mapcar (lambda (c) (comint-send-string sapf-buffer c)) cs))
     (error "no sapf process running?")))
@@ -148,6 +146,69 @@
       (sapf-foreach-paragraph
        (lambda () (sapf-run-paragraph transform-text)))
     (sapf-run-paragraph transform-text)))
+
+(defun sapf--terminal ()
+  (let ((use-vterm (or (eq sapf-terminal 'vterm)
+                       (and (eq sapf-terminal 'auto)
+                            (fboundp 'vterm)))))
+    (if use-vterm 'vterm 'comint)))
+
+(defun sapf--comint-running-p ()
+  (comint-check-proc sapf-buffer))
+
+(defun sapf--vterm-running-p ()
+  (vterm-check-proc sapf-buffer))
+
+(defun sapf--running-p ()
+  (case (sapf--terminal)
+    (vterm (sapf--vterm-running-p))
+    (t (sapf--comint-running-p))))
+
+(defun sapf--comint-start-process ()
+  (apply
+   'make-comint
+   "sapf"
+   sapf-interpreter
+   nil
+   sapf-interpreter-arguments))
+
+(defun sapf--vterm-start-process ()
+  (let* ((vterm-buffer-name sapf-buffer)
+         (vterm-kill-buffer-on-exit nil)
+         (vterm-shell (concat sapf-interpreter
+                              " "
+                              (mapconcat 'shell-quote-argument sapf-interpreter-arguments " ")))
+         (existing-buf (get-buffer sapf-buffer))
+         (existing-buf-wins (and existing-buf
+                                 (get-buffer-window-list existing-buf nil t))))
+    (when existing-buf
+      ;; rename existing buffer
+      (with-current-buffer existing-buf
+        (rename-buffer (generate-new-buffer-name "*sapf-previous*"))))
+    (vterm--internal (lambda (buf &rest rest)
+                       (if existing-buf-wins
+                           ;; switch all the buffers showing the existing buffer to the new one
+                           (dolist (win (get-buffer-window-list existing-buf nil t))
+                             (set-window-buffer win buf))
+                         (apply 'pop-to-buffer buf rest))))
+    (when existing-buf
+      ;; kill existing buffer
+      (kill-buffer existing-buf))))
+
+(defun sapf--start-process ()
+  (case (sapf--terminal)
+    (vterm (sapf--vterm-start-process))
+    (t (sapf--comint-start-process))))
+
+(defun sapf--stop-process ()
+  (let ((process (get-buffer-process sapf-buffer)))
+    (when process
+      (when (eq (sapf--terminal) 'vterm)
+        ;; erase the buffer - this is the easiest way to ensure that the "process killed" message becomes visible despite vterm shenanigans
+        (with-current-buffer sapf-buffer
+          (let ((inhibit-read-only t))
+            (erase-buffer))))
+      (kill-process process))))
 
 ;; remove incorrect smartparens pairs
 (with-eval-after-load 'smartparens
