@@ -22,8 +22,8 @@
   "*Command-line arguments to be passed to the sapf interpreter (default=nil).")
 
 (defvar sapf-terminal
-  'auto
-  "*Which type of terminal to run the sapf interpreter in: vterm, comint, or auto (default=auto).")
+  'comint
+  "*Which type of terminal to run the sapf interpreter in: vterm, comint, or auto (default=comint).")
 
 (defvar sapf-highlight
   #'pulse-momentary-highlight-region
